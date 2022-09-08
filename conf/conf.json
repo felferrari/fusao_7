@@ -1,0 +1,21 @@
+{
+    "img_source":"l2",
+    "n_inference_models":5,
+    "n_imgs":3,
+    "n_train_models":5,
+    "patch_size":128,
+    "patch_overlap":0.7,
+    "min_perc":0.02,
+    "batch_size":32,
+    "max_epochs":500,
+    "learning_rate":1e-3,
+    "n_classes":3,
+    "class_weights":[0.2, 0.8, 0],
+    "n_opt_layers":13,
+    "n_sar_layers":2,
+    "n_cmap_layers":2,
+    "train_patience":10,
+    "run_eagerly":false,
+    "cmap_lim":[5, 70],
+    "test_crop":16
+}
