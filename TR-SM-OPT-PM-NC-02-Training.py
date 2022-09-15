@@ -2,8 +2,10 @@ import tensorflow as tf
 from models.model_t import SM_Transformer_PM
 from ops.ops import load_json
 import os
-from models.losses import WBCE
-from ops.dataloader_pm_nc import get_train_val_dataset, data_augmentation, prep_data_opt
+from models.losses import WBCE, WFocal
+#from ops.dataloader_pm_nc import get_train_val_dataset, data_augmentation, prep_data_opt
+from ops.dataloader_pm_nc_comp import get_train_val_dataset, data_augmentation, prep_data_opt
+
 
 
 conf = load_json(os.path.join('conf', 'conf.json'))
@@ -19,8 +21,9 @@ n_sar_layers = conf['n_sar_layers']
 class_weights = conf['class_weights']
 train_patience = conf['train_patience']
 
-exp_name = 'tr_sm_opt_pm_nc_5'
-exp_path = os.path.join('exps', exp_name)
+exp_name = 'tr_sm_opt_pm_nc_7'
+exp_path = os.path.join('D:', 'Ferrari', 'exps_7', exp_name)
+
 models_path = os.path.join(exp_path, 'models')
 logs_path = os.path.join(exp_path, 'logs')
 
@@ -30,7 +33,7 @@ shape_previous = (patch_size, patch_size, 1)
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-ds_train, ds_val, n_patches_train, n_patches_val = get_train_val_dataset(2019)
+ds_train, ds_val, n_patches_train, n_patches_val = get_train_val_dataset(2018)
 
 ds_train = ds_train.map(data_augmentation, num_parallel_calls=AUTOTUNE)
 ds_train = ds_train.map(prep_data_opt, num_parallel_calls=AUTOTUNE)
@@ -53,6 +56,8 @@ for model_idx in range(n_train_models):
 
     optimizer = tf.keras.optimizers.Adam(learning_rate)
     loss = WBCE(class_weights)
+    #loss = WFocal(class_weights)
+
     metrics = ['accuracy']
 
     model.compile(
@@ -66,7 +71,7 @@ for model_idx in range(n_train_models):
     early_stop = tf.keras.callbacks.EarlyStopping(
         monitor='val_loss',
         verbose=1,
-        #restore_best_weights = True,
+        restore_best_weights = True,
         patience=train_patience
     )
 
@@ -86,8 +91,8 @@ for model_idx in range(n_train_models):
 
     callbacks = [
         early_stop,
-        tensorboard,
-        model_checkpoint
+        tensorboard#,
+        #model_checkpoint
         ]
 
     
@@ -103,5 +108,6 @@ for model_idx in range(n_train_models):
     )
 
     model.summary()
+    model.save_weights(os.path.join(models_path, f'model_{model_idx}'))
 
 

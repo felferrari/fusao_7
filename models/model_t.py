@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import LayerNormalization, Dropout, GlobalAveragePooling1D, Dense, Conv2D, BatchNormalization, GlobalAveragePooling2D
 from tensorflow.keras import Model
-from .models import resunet_encoder, resunet_decoder, resunet_classifier
 from .transformer import  SwinTransformerBlock, PatchEmbed, BasicLayer, PatchMerging, Patch_expanding
 import numpy as np
 
@@ -16,15 +15,11 @@ class SM_Transformer_PM(Model):
         self.encoder = SwinUnetEncoder()
         self.decoder = SwinUnetDecoder()
 
-        self.patch_expand = Patch_expanding(
-            num_patch = (8,8), 
-            embed_dim = 384, 
-            upsample_rate = 2)
 
-        self.class_proj = Conv2D(filters = 48, kernel_size = 3, padding = 'same')
-        self.class_proj2 = Conv2D(filters = n_classes, kernel_size = 1)
+        #self.class_proj = Conv2D(filters = 48, kernel_size = 3, padding = 'same')
+        self.class_proj = Conv2D(filters = n_classes, kernel_size = 1)
 
-        self.last_bn = BatchNormalization(name = 'last_bn')
+        #self.last_bn = BatchNormalization(name = 'last_bn')
     
     
     def call(self, inputs):
@@ -32,8 +27,8 @@ class SM_Transformer_PM(Model):
         input_1 = inputs[1]
         previous_input = inputs[2]
 
-        #input = tf.concat([input_0,  input_1, previous_input], axis=-1)
-        input = tf.concat([input_0,  input_1], axis=-1)
+        input = tf.concat([input_0,  input_1, previous_input], axis=-1)
+        #input = tf.concat([input_0,  input_1], axis=-1)
 
         x = self.encoder(input)
         x = self.decoder(x)
@@ -42,7 +37,7 @@ class SM_Transformer_PM(Model):
         #x = self.last_bn(x)
         #x = tf.keras.activations.relu(x)
 
-        x = self.class_proj2(x)
+        x = self.class_proj(x)
 
         return tf.keras.activations.softmax(x)
         #return tf.keras.activations.sigmoid(x)

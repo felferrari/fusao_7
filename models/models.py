@@ -9,7 +9,7 @@ class ResBlock(tf.keras.layers.Layer):
         self.idt_conv =  tf.keras.layers.Conv2D(size, (1,1), padding='same', strides=strides, name = f'{name}_conv_idt')
         self.bn_relu_0 = BN_Relu(name = f'{name}_bn_relu_0')
         self.conv_0 = tf.keras.layers.Conv2D(size, (3,3), padding='same', strides = strides, name = f'{name}_conv_0')
-        self.dropout = tf.keras.layers.Dropout(0.5)
+        #self.dropout = tf.keras.layers.Dropout(0.5)
 
         self.bn_relu_1 = BN_Relu(name = f'{name}_bn_relu_1')
         self.conv_1 = tf.keras.layers.Conv2D(size, (3,3), padding='same', name = f'{name}_conv_1')
@@ -22,7 +22,7 @@ class ResBlock(tf.keras.layers.Layer):
         x = self.conv_0(x)
 
         x = self.bn_relu_1(x, training)
-        x = self.dropout(x, training)
+        #x = self.dropout(x, training)
         x = self.conv_1(x)
 
         return self.add([idt, x])

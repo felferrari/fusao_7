@@ -5,8 +5,6 @@ from sklearn.metrics import f1_score, average_precision_score, confusion_matrix
 import pandas as pd
 from skimage.morphology import area_opening
 
-exp_name = 'rs_sm_opt_pm_nc_2'
-
 conf = load_json(os.path.join('conf', 'conf.json'))
 img_source = conf['img_source']
 max_epochs = conf['max_epochs']
@@ -22,7 +20,9 @@ train_patience = conf['train_patience']
 test_crop = conf['test_crop']
 n_imgs = conf['n_imgs']
 
-exp_path = os.path.join('exps', exp_name)
+exp_name = 'rs_sm_opt_pm_nc_5'
+exp_path = os.path.join('D:', 'Ferrari', 'exps_7', exp_name)
+
 models_path = os.path.join(exp_path, 'models')
 logs_path = os.path.join(exp_path, 'logs')
 pred_path = os.path.join(exp_path, 'predicted')

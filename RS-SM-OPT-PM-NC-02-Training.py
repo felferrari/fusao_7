@@ -1,9 +1,10 @@
 import tensorflow as tf
-from models.models import sm_resunet_pm
+from models.models import ResUnetPM, build_resunet
 from ops.ops import load_json
 import os
-from models.losses import WBCE
-from ops.dataloader_pm_nc import get_train_val_dataset, data_augmentation, prep_data_opt
+from models.losses import WBCE, WFocal
+from ops.dataloader_pm_nc_comp import get_train_val_dataset, data_augmentation, prep_data_opt
+#from ops.dataloader_pm_nc import get_train_val_dataset, data_augmentation, prep_data_opt
 
 
 conf = load_json(os.path.join('conf', 'conf.json'))
@@ -19,8 +20,9 @@ n_sar_layers = conf['n_sar_layers']
 class_weights = conf['class_weights']
 train_patience = conf['train_patience']
 
-exp_name = 'rs_sm_opt_pm_nc'
-exp_path = os.path.join('exps', exp_name)
+exp_name = 'rs_sm_opt_pm_nc_5'
+exp_path = os.path.join('D:', 'Ferrari', 'exps_7', exp_name)
+
 models_path = os.path.join(exp_path, 'models')
 logs_path = os.path.join(exp_path, 'logs')
 
@@ -28,10 +30,12 @@ shape_opt = (patch_size, patch_size, n_opt_layers)
 shape_sar = (patch_size, patch_size, n_sar_layers)
 shape_previous = (patch_size, patch_size, 1)
 model_size = [64, 128, 256, 512]
+#model_size = [32, 64, 128, 256]
+#model_size = [32, 64, 128]
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-ds_train, ds_val, n_patches_train, n_patches_val = get_train_val_dataset(2019)
+ds_train, ds_val, n_patches_train, n_patches_val = get_train_val_dataset(2018)
 
 ds_train = ds_train.map(data_augmentation, num_parallel_calls=AUTOTUNE)
 ds_train = ds_train.map(prep_data_opt, num_parallel_calls=AUTOTUNE)
@@ -41,24 +45,26 @@ ds_train = ds_train.prefetch(AUTOTUNE)
 
 ds_val = ds_val.map(data_augmentation, num_parallel_calls=AUTOTUNE)
 ds_val = ds_val.map(prep_data_opt, num_parallel_calls=AUTOTUNE)
-ds_val = ds_val.shuffle(50*batch_size)
+#ds_val = ds_val.shuffle(50*batch_size)
 ds_val = ds_val.batch(batch_size)
 ds_val = ds_val.prefetch(AUTOTUNE)
 
-train_steps = n_patches_train // batch_size
-val_steps = n_patches_val // batch_size
-
+train_steps = (n_patches_train // batch_size)
+val_steps = (n_patches_val // batch_size)
 
 for model_idx in range(n_train_models):
-    model = sm_resunet_pm(shape_opt, shape_previous, model_size, n_classes, reg_weight = None, name = exp_name)
+    model = ResUnetPM(model_size, n_classes, name = exp_name)
+    #model = build_resunet(shape_opt, shape_previous, model_size, n_classes)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate)
-    loss = WBCE(class_weights)
+    #loss = WBCE(class_weights)
+    loss = WFocal(class_weights)
     metrics = ['accuracy']
 
     model.compile(
         loss=loss,
         optimizer = optimizer,
+        #run_eagerly = True,
         metrics = metrics
     )
 
@@ -79,17 +85,17 @@ for model_idx in range(n_train_models):
         monitor='val_loss',
         verbose=1,
         save_best_only=True,
-        save_weights_only=False,
+        save_weights_only=True,
         save_freq='epoch',
     )
 
     callbacks = [
         early_stop,
-        tensorboard,
-        model_checkpoint
+        tensorboard#,
+        #model_checkpoint
         ]
 
-    model.summary()
+    #model.summary()
     
     history = model.fit(
         x=ds_train,
@@ -100,6 +106,8 @@ for model_idx in range(n_train_models):
         verbose=1, 
         callbacks = callbacks
     )
+    model.summary()
+    model.save_weights(os.path.join(models_path, f'model_{model_idx}'))
 
 
 
