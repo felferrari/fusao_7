@@ -1,6 +1,7 @@
 import tensorflow as tf
-from tensorflow.keras.layers import LayerNormalization, Dropout, GlobalAveragePooling1D, Dense, Conv2D
-from tensorflow.keras import Model
+#from tensorflow import keras
+from keras.layers import LayerNormalization, Dropout, GlobalAveragePooling1D, Dense, Conv2D
+from keras import Model
 from .models import resunet_encoder, resunet_decoder, resunet_classifier
 from .transformer import  SwinTransformerBlock, PatchEmbed, BasicLayer, PatchMerging, Patch_expanding
 import numpy as np

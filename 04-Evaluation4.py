@@ -22,8 +22,9 @@ class_weights = conf['class_weights']
 train_patience = conf['train_patience']
 test_crop = conf['test_crop']
 n_imgs = conf['n_imgs']
+n_exps = conf['n_exps']
 
-exp_name = 'rs_sm_opt_pm_nc_5'
+exp_name = 'exp_4'
 exp_path = os.path.join('D:', 'Ferrari', 'exps_7', exp_name)
 
 models_path = os.path.join(exp_path, 'models')
@@ -70,8 +71,9 @@ def complete_nan_values(curve):
     curve[:,1] = vec_rec
     return curve 
 
-for test_image in range(1):
-    predicted = np.load(os.path.join(pred_path, f'pred_{test_image}.npy'))[:,:,1]
+for n_exp in range(n_exps):
+
+    predicted = np.load(os.path.join(pred_path, f'pred_{n_exp}.npy'))[:,:,1]
 
     #recall, prec, acc = prec_recall_curve(predicted, label, 0.5)
 
@@ -86,11 +88,6 @@ for test_image in range(1):
             prec = curve[:,0]
             recall = curve[:,1]
 
-            #recall = np.insert(recall, 0, 0)
-            #prec = np.insert(prec, 0, prec[0])
-            #deltaR = recall[1:]-recall[:-1]
-            #AP = np.sum(prec[1:]*deltaR)
-
             recall_ = np.insert(recall, 0, 0)
             prec_ = np.insert(prec, 0, prec[0])
             deltaR = recall_[1:]-recall_[:-1]
@@ -104,16 +101,7 @@ for test_image in range(1):
             ax.set_ylim([0,1.01])
             ax.set_xlim([0,1.01])
             plt.grid()
-            plt.savefig(os.path.join(visual_path, f'result_{exp_name}.png'))
+            plt.savefig(os.path.join(visual_path, f'result_{exp_name}_{n_exp}.png'))
 
-            np.save(os.path.join(visual_path, f'curve_{test_image}.npy'), curve)
+            np.save(os.path.join(visual_path, f'curve_{n_exp}.npy'), curve)
         
-
-
-
-
-
-
-
-    
-

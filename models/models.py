@@ -1,6 +1,6 @@
 import tensorflow as tf
-from tensorflow.keras.models import Model, load_model, Sequential
-from tensorflow.keras.layers import Conv2D, Dropout, Add, MaxPool2D, Input, UpSampling2D
+from keras.models import Model, load_model, Sequential
+from keras.layers import Conv2D, Dropout, Add, MaxPool2D, Input, UpSampling2D
 
 class ResBlock(tf.keras.layers.Layer):
     def __init__(self, size, strides, name = ''):

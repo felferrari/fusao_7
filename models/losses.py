@@ -1,6 +1,6 @@
 import tensorflow as tf
-from tensorflow.keras import backend as K
-from tensorflow.keras.losses import Loss
+from keras import backend as K
+from keras.losses import Loss
 
 class WBCE(Loss):
     def __init__(self, weights=1.0, class_indexes = None, **kwargs):

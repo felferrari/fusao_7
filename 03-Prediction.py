@@ -1,6 +1,7 @@
 import tensorflow as tf
 from ops.ops import load_json
 from models.models import ResUnetPM, build_resunet
+from models.model_t import SM_Transformer_PM
 import os
 from models.losses import WBCE, WFocal
 from ops.dataloader_pm_nc_comp import PredictDataGen_opt, get_train_val_dataset, data_augmentation, prep_data_opt
@@ -23,7 +24,7 @@ test_crop = conf['test_crop']
 n_imgs = conf['n_imgs']
 n_exps = conf['n_exps']
 
-exp_name = 'exp_1'
+exp_name = 'exp_4'
 exp_path = os.path.join('D:', 'Ferrari', 'exps_7', exp_name)
 
 models_path = os.path.join(exp_path, 'models')
@@ -37,6 +38,7 @@ shape_sar = (patch_size, patch_size, n_sar_layers)
 shape_previous = (patch_size, patch_size, 1)
 
 model_size = [64, 128, 256, 512]
+#model_size = [32, 64, 128]
 
 outfile = os.path.join(visual_path, f'pred_{exp_name}.txt')
 
@@ -65,7 +67,9 @@ with open(outfile, 'w') as sys.stdout:
     preds_l = []
 
     for model_idx in range(n_exps):
-        model = ResUnetPM(model_size, n_classes, name = f'{exp_name}_{model_idx}')
+        #model = ResUnetPM(model_size, n_classes, name = f'{exp_name}_{model_idx}')
+        model = SM_Transformer_PM(n_classes, name = exp_name)
+        #model = build_resunet(shape_opt, shape_previous, model_size, n_classes)
         print(model)
 
         optimizer = tf.keras.optimizers.Adam(learning_rate)
@@ -101,9 +105,9 @@ with open(outfile, 'w') as sys.stdout:
                 pred_reconstructed = np.row_stack((pred_reconstructed, np.column_stack(line_i)))
 
         pred_reconstructed = pred_reconstructed[:img_shape[0], :img_shape[1], :]
-        #preds_l.append(pred_reconstructed.astype(np.float16))
+        preds_l.append(pred_reconstructed.astype(np.float16))
         np.save(os.path.join(pred_path, f'pred_{model_idx}.npy'), pred_reconstructed.astype(np.float16))
 
-    #preds_l = np.array(preds_l)
-    #pred_mean = np.mean(preds_l, axis=0)
-    #np.save(os.path.join(pred_path, f'pred_{test_image}.npy'), pred_mean)
+    preds_l = np.array(preds_l)
+    pred_mean = np.mean(preds_l, axis=0)
+    np.save(os.path.join(pred_path, f'pred.npy'), pred_mean)

@@ -1,13 +1,17 @@
 import tensorflow as tf
+from models.models import ResUnetPM, build_resunet
 from models.model_t import SM_Transformer_PM
 from ops.ops import load_json
 import os
 from models.losses import WBCE, WFocal
-#from ops.dataloader_pm_nc import get_train_val_dataset, data_augmentation, prep_data_opt
 from ops.dataloader_pm_nc_comp import get_train_val_dataset, data_augmentation, prep_data_opt
+#from ops.dataloader_pm_nc import get_train_val_dataset, data_augmentation, prep_data_opt
 import sys
+import time
+from multiprocessing import Process
+import numpy as np
 
-
+exp_name = 'exp_4'
 
 conf = load_json(os.path.join('conf', 'conf.json'))
 img_source = conf['img_source']
@@ -21,51 +25,55 @@ n_opt_layers = conf['n_opt_layers']
 n_sar_layers = conf['n_sar_layers']
 class_weights = conf['class_weights']
 train_patience = conf['train_patience']
+n_exps = conf['n_exps']
 
-exp_name = 'tr_sm_opt_pm_nc_7'
 exp_path = os.path.join('D:', 'Ferrari', 'exps_7', exp_name)
 
 models_path = os.path.join(exp_path, 'models')
 logs_path = os.path.join(exp_path, 'logs')
 visual_path = os.path.join(exp_path, 'visual')
 
+def run(model_idx):
+    outfile = os.path.join(visual_path, f'train_{exp_name}_{model_idx}.txt')
 
-shape_opt = (patch_size, patch_size, n_opt_layers)
-shape_sar = (patch_size, patch_size, n_sar_layers)
-shape_previous = (patch_size, patch_size, 1)
+    with open(outfile, 'w') as sys.stdout:
 
-AUTOTUNE = tf.data.experimental.AUTOTUNE
+        shape_opt = (patch_size, patch_size, n_opt_layers)
+        shape_sar = (patch_size, patch_size, n_sar_layers)
+        shape_previous = (patch_size, patch_size, 1)
 
-ds_train, ds_val, n_patches_train, n_patches_val = get_train_val_dataset(2018)
+        #model_size = [64, 128, 256, 512]
+        model_size = [32, 64, 128]
 
-ds_train = ds_train.map(data_augmentation, num_parallel_calls=AUTOTUNE)
-ds_train = ds_train.map(prep_data_opt, num_parallel_calls=AUTOTUNE)
-ds_train = ds_train.shuffle(50*batch_size)
-ds_train = ds_train.batch(batch_size)
-ds_train = ds_train.prefetch(AUTOTUNE)
+        AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-ds_val = ds_val.map(data_augmentation, num_parallel_calls=AUTOTUNE)
-ds_val = ds_val.map(prep_data_opt, num_parallel_calls=AUTOTUNE)
-#ds_val = ds_val.shuffle(50*batch_size)
-ds_val = ds_val.batch(batch_size)
-ds_val = ds_val.prefetch(AUTOTUNE)
+        ds_train, ds_val, n_patches_train, n_patches_val = get_train_val_dataset(2018)
 
-train_steps = n_patches_train // batch_size
-val_steps = n_patches_val // batch_size
+        ds_train = ds_train.map(data_augmentation, num_parallel_calls=AUTOTUNE)
+        ds_train = ds_train.map(prep_data_opt, num_parallel_calls=AUTOTUNE)
+        ds_train = ds_train.shuffle(50*batch_size)
+        ds_train = ds_train.batch(batch_size)
+        ds_train = ds_train.prefetch(AUTOTUNE)
 
-outfile = os.path.join(visual_path, f'{exp_name}_train.txt')
+        ds_val = ds_val.map(data_augmentation, num_parallel_calls=AUTOTUNE)
+        ds_val = ds_val.map(prep_data_opt, num_parallel_calls=AUTOTUNE)
+        ds_val = ds_val.batch(batch_size)
+        ds_val = ds_val.prefetch(AUTOTUNE)
 
-with open(outfile, 'w') as sys.stdout:
-    print(f'Batch size: {batch_size}')
-    print(f'Learning Rate: {learning_rate}')
-    print(f'Class Weights: {class_weights}')
-    for model_idx in range(n_train_models):
+        train_steps = (n_patches_train // batch_size)
+        val_steps = (n_patches_val // batch_size)
+
+        print(f'Batch size: {batch_size}')
+        print(f'Learning Rate: {learning_rate}')
+        print(f'Class Weights: {class_weights}')
+
+        #model = ResUnetPM(model_size, n_classes, name = f'{exp_name}_{model_idx}')
         model = SM_Transformer_PM(n_classes, name = exp_name)
+        #model = build_resunet(shape_opt, shape_previous, model_size, n_classes)
         print(model)
 
         optimizer = tf.keras.optimizers.Adam(learning_rate)
         loss = WBCE(class_weights)
-        #loss = WFocal(class_weights)
         print(loss)
 
         metrics = ['accuracy']
@@ -75,7 +83,6 @@ with open(outfile, 'w') as sys.stdout:
             optimizer = optimizer,
             #run_eagerly = True,
             metrics = metrics
-            
         )
 
         early_stop = tf.keras.callbacks.EarlyStopping(
@@ -90,23 +97,12 @@ with open(outfile, 'w') as sys.stdout:
             histogram_freq = 10
         )
 
-        model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-            os.path.join(models_path, f'model_{model_idx}'),
-            monitor='val_loss',
-            verbose=1,
-            save_best_only=True,
-            save_weights_only=True,
-            save_freq='epoch',
-        )
-
         callbacks = [
             early_stop,
-            tensorboard#,
-            #model_checkpoint
+            tensorboard
             ]
 
-        
-
+        t0 = time.perf_counter()
         history = model.fit(
             x=ds_train,
             validation_data=ds_val,
@@ -116,8 +112,17 @@ with open(outfile, 'w') as sys.stdout:
             verbose=2, 
             callbacks = callbacks
         )
-
+        print(f'Training time: {(time.perf_counter() - t0)/60} mins')
         model.summary()
         model.save_weights(os.path.join(models_path, f'model_{model_idx}'))
 
 
+if __name__=="__main__":
+    conf = load_json(os.path.join('conf', 'conf.json'))
+    n_exps = conf['n_exps']
+
+    
+    for model_idx in range(n_exps):
+        p = Process(target=run, args=(model_idx,))
+        p.start()
+        p.join()

@@ -19,8 +19,9 @@ class_weights = conf['class_weights']
 train_patience = conf['train_patience']
 test_crop = conf['test_crop']
 n_imgs = conf['n_imgs']
+n_exps = conf['n_exps']
 
-exp_name = 'rs_sm_opt_pm_nc_5'
+exp_name = 'exp_4'
 exp_path = os.path.join('D:', 'Ferrari', 'exps_7', exp_name)
 
 models_path = os.path.join(exp_path, 'models')
@@ -62,19 +63,20 @@ def conf_matrix(label, pred_prob, max_cloud_map):
 
 
 label = np.load(os.path.join(prep_path, f'label_2019.npy'))
+for n_exp in range(n_exps):
 
-low_m = np.zeros(4)
-med_m = np.zeros(4)
-hig_m = np.zeros(4)
-glo_m = np.zeros(4)
-for test_image in range(1):
-    predicted = np.load(os.path.join(pred_path, f'pred_{test_image}.npy'))[:,:,1]
+    low_m = np.zeros(4)
+    med_m = np.zeros(4)
+    hig_m = np.zeros(4)
+    glo_m = np.zeros(4)
+
+    predicted = np.load(os.path.join(pred_path, f'pred_{n_exp}.npy'))[:,:,1]
 
     max_cloud_map =  np.maximum(
         np.load(os.path.join(prep_path, f'cmap_2018.npy')),
         np.load(os.path.join(prep_path, f'cmap_2019.npy'))
     )
-    
+
 
     low_data, med_data, hig_data = conf_matrix(label, predicted, max_cloud_map)
 
@@ -83,72 +85,72 @@ for test_image in range(1):
     hig_m += np.array(hig_data)
     glo_m += np.array(hig_data) + np.array(med_data) + np.array(low_data)
 
-cloud = ['Low', 'Med', 'High', 'Global']
+    cloud = ['Low', 'Med', 'High', 'Global']
 
-prec = [
-    low_m[3] / (low_m[3] + low_m[1]),
-    med_m[3] / (med_m[3] + med_m[1]),
-    hig_m[3] / (hig_m[3] + hig_m[1]),
-    glo_m[3] / (glo_m[3] + glo_m[1]),
-]
+    prec = [
+        low_m[3] / (low_m[3] + low_m[1]),
+        med_m[3] / (med_m[3] + med_m[1]),
+        hig_m[3] / (hig_m[3] + hig_m[1]),
+        glo_m[3] / (glo_m[3] + glo_m[1]),
+    ]
 
-recall = [
-    low_m[3] / (low_m[3] + low_m[2]),
-    med_m[3] / (med_m[3] + med_m[2]),
-    hig_m[3] / (hig_m[3] + hig_m[2]),
-    glo_m[3] / (glo_m[3] + glo_m[2]),
-]
+    recall = [
+        low_m[3] / (low_m[3] + low_m[2]),
+        med_m[3] / (med_m[3] + med_m[2]),
+        hig_m[3] / (hig_m[3] + hig_m[2]),
+        glo_m[3] / (glo_m[3] + glo_m[2]),
+    ]
 
-f1 = [
-    2 * prec[0] * recall[0] / (prec[0] + recall[0]),
-    2 * prec[1] * recall[1] / (prec[1] + recall[1]),
-    2 * prec[2] * recall[2] / (prec[2] + recall[2]),
-    2 * prec[3] * recall[3] / (prec[3] + recall[3])
-]
+    f1 = [
+        2 * prec[0] * recall[0] / (prec[0] + recall[0]),
+        2 * prec[1] * recall[1] / (prec[1] + recall[1]),
+        2 * prec[2] * recall[2] / (prec[2] + recall[2]),
+        2 * prec[3] * recall[3] / (prec[3] + recall[3])
+    ]
 
-acc = [
-    (low_m[3] + low_m[0]) / (low_m[0] + low_m[1] + low_m[2] + low_m[3]),
-    (med_m[3] + med_m[0]) / (med_m[0] + med_m[1] + med_m[2] + med_m[3]),
-    (hig_m[3] + hig_m[0]) / (hig_m[0] + hig_m[1] + hig_m[2] + hig_m[3]),
-    (glo_m[3] + glo_m[0]) / (glo_m[0] + glo_m[1] + glo_m[2] + glo_m[3]),
-]
+    acc = [
+        (low_m[3] + low_m[0]) / (low_m[0] + low_m[1] + low_m[2] + low_m[3]),
+        (med_m[3] + med_m[0]) / (med_m[0] + med_m[1] + med_m[2] + med_m[3]),
+        (hig_m[3] + hig_m[0]) / (hig_m[0] + hig_m[1] + hig_m[2] + hig_m[3]),
+        (glo_m[3] + glo_m[0]) / (glo_m[0] + glo_m[1] + glo_m[2] + glo_m[3]),
+    ]
 
-tn = [
-    low_m[0],
-    med_m[0],
-    hig_m[0],
-    glo_m[0],
-]
-fp = [
-    low_m[1],
-    med_m[1],
-    hig_m[1],
-    glo_m[1],
-]
-fn = [
-    low_m[2],
-    med_m[2],
-    hig_m[2],
-    glo_m[2],
-]
-tp = [
-    low_m[3],
-    med_m[3],
-    hig_m[3],
-    glo_m[3],
-]
+    tn = [
+        low_m[0],
+        med_m[0],
+        hig_m[0],
+        glo_m[0],
+    ]
+    fp = [
+        low_m[1],
+        med_m[1],
+        hig_m[1],
+        glo_m[1],
+    ]
+    fn = [
+        low_m[2],
+        med_m[2],
+        hig_m[2],
+        glo_m[2],
+    ]
+    tp = [
+        low_m[3],
+        med_m[3],
+        hig_m[3],
+        glo_m[3],
+    ]
 
-pd.DataFrame({
-    'Cloud': cloud,
-    'F1 Score': f1,
-    'Precision': prec,
-    'Recall': recall,
-    'Accuracy':acc,
-    'TP':tp,
-    'FP':fp,
-    'TN':tn,
-    'FN':fn
-}).to_excel(os.path.join(visual_path, f'metrics_{exp_name}.xlsx'))
+    pd.DataFrame({
+        'Cloud': cloud,
+        'F1 Score': f1,
+        'Precision': prec,
+        'Recall': recall,
+        'Accuracy':acc,
+        'TP':tp,
+        'FP':fp,
+        'TN':tn,
+        'FN':fn
+    }).to_excel(os.path.join(visual_path, f'metrics_{exp_name}_{n_exp}.xlsx'))
 
 
 

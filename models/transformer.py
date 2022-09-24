@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Dropout, Conv2D, LayerNormalization, GlobalAveragePooling1D
+from keras.layers import Dense, Dropout, Conv2D, LayerNormalization, GlobalAveragePooling1D
 
 CFGS = {
     'teste_128': dict(input_size=(128, 128), window_size=4, embed_dim=96, depths=[2, 2, 6, 2], num_heads=[3, 6, 12, 24]),

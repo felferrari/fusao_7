@@ -1,6 +1,7 @@
 import tensorflow as tf
-from tensorflow.keras.layers import LayerNormalization, Dropout, GlobalAveragePooling1D, Dense, Conv2D, BatchNormalization, GlobalAveragePooling2D
-from tensorflow.keras import Model
+from tensorflow import keras
+from keras.layers import LayerNormalization, Dropout, GlobalAveragePooling1D, Dense, Conv2D, BatchNormalization, GlobalAveragePooling2D
+from keras import Model
 from .transformer import  SwinTransformerBlock, PatchEmbed, BasicLayer, PatchMerging, Patch_expanding
 import numpy as np
 
@@ -12,8 +13,8 @@ class SM_Transformer_PM(Model):
         name = ''):
 
         super().__init__()
-        self.encoder = SwinUnetEncoder()
-        self.decoder = SwinUnetDecoder()
+        self.encoder = SwinUnetEncoder(patch_size = (2,2))
+        self.decoder = SwinUnetDecoder(patch_size = (2,2))
 
 
         #self.class_proj = Conv2D(filters = 48, kernel_size = 3, padding = 'same')
@@ -262,8 +263,8 @@ class SwinUnetDecoder(tf.keras.layers.Layer):
         self.patch_expand_0 = Patch_expanding(
             num_patch = (patches_resolution[0],
                          patches_resolution[1]), 
-            embed_dim = embed_dim*4, 
-            upsample_rate = 4
+            embed_dim = embed_dim,#*4, 
+            upsample_rate = 2#4
         )
 
         self.basic_layer_0 = BasicLayer(dim=int(embed_dim),
